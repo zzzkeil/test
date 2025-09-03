@@ -1,5 +1,7 @@
 #!/bin/bash
 
+apt install unzip
+
 URL="https://www.google.com/maps/d/kml?mid=1L-gatZq7W4lZzdrfLLAK3AVUoc8lKNo&femb=1&ll=50.36612061088382%2C10.627823200000002&z=6"
 DL_DIR="dl_data"
 KMZ_FILE="gerds.kmz"
@@ -13,9 +15,9 @@ if [ $? -ne 0 ]; then
 fi
 
 mkdir "$DEST_DIR"
-unzip -j "$KMZ_FILE" '*.dml' -d "$DEST_DIR"
+unzip -j "$DL_DIR/$KMZ_FILE" '*.kml' -d "$DEST_DIR"
 if [ $? -ne 0 ]; then
-    echo "dml file found or extraction failed."
+    echo "kml file found or extraction failed."
     rm -f "$KMZ_FILE"
     exit 1
 fi
