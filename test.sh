@@ -1,6 +1,6 @@
 #!/bin/bash
 
-apt install unzip
+apt install unzip jq
 
 URL="https://www.google.com/maps/d/kml?mid=1L-gatZq7W4lZzdrfLLAK3AVUoc8lKNo&femb=1&ll=50.36612061088382%2C10.627823200000002&z=6"
 DL_DIR="dl_data"
@@ -51,6 +51,7 @@ echo "Processing coordinates..."
 while IFS=',' read -r lat lon; do
     address=$(get_address "$lat" "$lon")
     echo "$address" >> "$OPENSMOUT_FILE"
+    sleep 1
 done < "$OPENSMIN_FILE"
 
 echo "Address list saved to: $OPENSMOUT_FILE"
