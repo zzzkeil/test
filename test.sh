@@ -26,13 +26,13 @@ rm -f "$KMZ_FILE"
 
 
 # sed $DL_DIR/$KMZ_FILE  in cor. line by line als coordinates.txt
-
+sed -n '/<coordinates>/,/<\/coordinates>/p' "$DEST_DIR/doc.kml" | grep -v coordinates | cut -d',' -f1,2 | tr ',' ' ' > "$DEST_DIR/coordinates.txt"
+# sed -n '/<coordinates>/,/<\/coordinates>/p' "$DEST_DIR/doc.kml" | grep -v coordinates > "$DEST_DIR/coordinates.txt"
 
 
 #openstreetmap test
-
-OPENSMIN_FILE="coordinates.txt"           
-OPENSMOUT_FILE="addresses.txt"
+OPENSMIN_FILE="$DEST_DIR/coordinates.txt"           
+OPENSMOUT_FILE="$DEST_DIR/addresses.txt"
 
 get_address() {
     local lat="$1"
