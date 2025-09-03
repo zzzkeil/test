@@ -24,3 +24,33 @@ fi
 
 rm -f "$KMZ_FILE"
 
+
+# sed $DL_DIR/$KMZ_FILE  in cor. line by line als coordinates.txt
+
+
+
+#openstreetmap test
+
+OPENSMIN_FILE="coordinates.txt"           
+OPENSMOUT_FILE="addresses.txt"
+
+get_address() {
+    local lat="$1"
+    local lon="$2"
+    response=$(curl -s "https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lon&format=json&addressdetails=1")
+    address=$(echo "$response" | jq -r '.display_name')
+    if [ "$address" != "null" ]; then
+        echo "$address"
+    else
+        echo "Address not found for coordinates: $lat, $lon"
+    fi
+}
+
+echo "Processing coordinates..."
+
+while IFS=',' read -r lat lon; do
+    address=$(get_address "$lat" "$lon")
+    echo "$address" >> "$OPENSMOUT_FILE"
+done < "$OPENSMIN_FILE"
+
+echo "Address list saved to: $OPENSMOUT_FILE"
