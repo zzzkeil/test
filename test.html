@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test mer mal</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    input { width: 400px; padding: 8px; font-size: 16px; }
+    ul { list-style: none; margin: 0; padding: 0; border: 1px solid #ccc; max-height: 200px; overflow-y: auto; width: 400px; }
+    li { padding: 6px; cursor: pointer; }
+    li:hover { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h2>Suche einen Ladepark</h2>
+  <p>Fang an zu tippen, um deinen den gewünschten Ladepark zu finden.</p>
+  <p>Zum Beispiel den Ort oder Betreiber.</p>
+  <input type="text" id="search" placeholder="Type to search...">
+  <ul id="results"></ul>
+
+  <script>
+    let addresses = [];
+
+    // Load addresses.txt and split into lines
+    fetch("addresses.txt")
+      .then(res => res.text())
+      .then(text => {
+        addresses = text.split("\n").map(line => line.trim()).filter(line => line.length > 0);
+      });
+
+    const input = document.getElementById("search");
+    const results = document.getElementById("results");
+
+    input.addEventListener("input", () => {
+      const query = input.value.toLowerCase();
+      results.innerHTML = "";
+
+      if (query.length < 2) return; // start searching after 2 chars
+
+      const matches = addresses.filter(addr =>
+        addr.toLowerCase().includes(query)
+      ).slice(0, 20); // limit results
+
+      matches.forEach(addr => {
+        const li = document.createElement("li");
+        li.textContent = addr;
+        li.addEventListener("click", () => {
+          input.value = addr;
+          results.innerHTML = "";
+        });
+        results.appendChild(li);
+      });
+    });
+  </script>
+</body>
+</html>
