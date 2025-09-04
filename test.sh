@@ -36,11 +36,15 @@ COOR_FILE="$MAP_DIR/coordinates.txt"
 ADDR_FILE="$MAP_DIR/addresses.txt"
 > "$ADDR_FILE"
 
-while IFS=, read -r lat lon; do
+
+while read -r lon lat; do
+    [ -z "$lon" ] && continue
     response=$(curl -s "https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=18&addressdetails=1" \
-        -A "geo-bash-script")
-    address=$(echo "$response" | jq -r '.display_name // "Address not found"')
+        -H "User-Agent: geo-bash-script/1.0")
+    address=$(echo "$response" | jq -r '.display_name // empty')
+    if [ -z "$address" ]; then
+        address="Address not found"
+    fi
     echo "$address" >> "$ADDR_FILE"
     sleep 1
 done < "$COOR_FILE"
-
