@@ -26,6 +26,8 @@ rm -f "$KMZ_FILE"
 
 #  $DL_DIR/$KMZ_FILE in name line by line
 grep -oP '(?<=<name>).*?(?=</name>)' "$MAP_DIR/doc.kml" > "$MAP_DIR/addresses.txt"
+# proper json file ?
+sed -E 's/^[^,]+, *//; s/ *[[].*[]]$//; s/ *[(].*[)]$//' "$MAP_DIR/addresses.txt" > "$MAP_DIR/addresses.json"
 
 #sed -n 's/.*<name>[^,]*, \(.*\)\[.*<\/name>/\1/p' "$MAP_DIR/doc.kml" | sed 's/ *$//' > "$MAP_DIR/addresses.txt"
 
