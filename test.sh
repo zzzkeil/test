@@ -24,8 +24,10 @@ fi
 
 rm -f "$KMZ_FILE"
 
-# sed $DL_DIR/$KMZ_FILE  in name and city line by line als addresses.txt
-sed -n 's/.*<name>[^,]*, \(.*\)\[.*<\/name>/\1/p' "$MAP_DIR/doc.kml" | sed 's/ *$//' > "$MAP_DIR/addresses.txt"
+#  $DL_DIR/$KMZ_FILE in name line by line
+grep -oP '(?<=<name>).*?(?=</name>)' "$MAP_DIR/doc.kml" > "$MAP_DIR/addresses.txt"
+
+#sed -n 's/.*<name>[^,]*, \(.*\)\[.*<\/name>/\1/p' "$MAP_DIR/doc.kml" | sed 's/ *$//' > "$MAP_DIR/addresses.txt"
 
 
 
