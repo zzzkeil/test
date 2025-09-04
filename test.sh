@@ -5,7 +5,7 @@ apt install unzip jq
 URL="https://www.google.com/maps/d/kml?mid=1L-gatZq7W4lZzdrfLLAK3AVUoc8lKNo&femb=1&ll=50.36612061088382%2C10.627823200000002&z=6"
 DL_DIR="dl_data"
 KMZ_FILE="gerds.kmz"
-DEST_DIR="map_data" 
+MAP_DIR="map_data" 
 
 mkdir "$DL_DIR"
 wget -q -O "$DL_DIR/$KMZ_FILE" "$URL"
@@ -14,8 +14,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-mkdir "$DEST_DIR"
-unzip -j "$DL_DIR/$KMZ_FILE" '*.kml' -d "$DEST_DIR"
+mkdir "$MAP_DIR"
+unzip -j "$DL_DIR/$KMZ_FILE" '*.kml' -d "$MAP_DIR"
 if [ $? -ne 0 ]; then
     echo "kml file found or extraction failed."
     rm -f "$KMZ_FILE"
@@ -26,32 +26,21 @@ rm -f "$KMZ_FILE"
 
 
 # sed $DL_DIR/$KMZ_FILE  in cor. line by line als coordinates.txt
-sed -n '/<coordinates>/,/<\/coordinates>/p' "$DEST_DIR/doc.kml" | grep -v coordinates | cut -d',' -f1,2 | tr ',' ' ' | sed 's/^[ \t]*//' > "$DEST_DIR/coordinates.txt"
+sed -n '/<coordinates>/,/<\/coordinates>/p' "$MAP_DIR/doc.kml" | grep -v coordinates | cut -d',' -f1,2 | tr ',' ' ' | sed 's/^[ \t]*//' > "$MAP_DIR/coordinates.txt"
 # sed -n '/<coordinates>/,/<\/coordinates>/p' "$DEST_DIR/doc.kml" | grep -v coordinates > "$DEST_DIR/coordinates.txt"
 
-
 #openstreetmap test
-OPENSMIN_FILE="$DEST_DIR/coordinates.txt"           
-OPENSMOUT_FILE="$DEST_DIR/addresses.txt"
 
-get_address() {
-    local lat="$1"
-    local lon="$2"
-    response=$(curl -s "https://nominatim.openstreetmap.org/reverse?lat=$lat&lon=$lon&format=json&addressdetails=1")
-    address=$(echo "$response" | jq -r '.display_name')
-    if [ "$address" != "null" ]; then
-        echo "$address"
-    else
-        echo "Address not found for coordinates: $lat, $lon"
-    fi
-}
 
-echo "Processing coordinates..."
+COOR_FILE="$MAP_DIR/coordinates.txt"
+ADDR_FILE="$MAP_DIR/addresses.txt"
+> "$ADDR_FILE"
 
-while IFS=',' read -r lat lon; do
-    address=$(get_address "$lat" "$lon")
-    echo "$address" >> "$OPENSMOUT_FILE"
+while IFS=, read -r lat lon; do
+    response=$(curl -s "https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=18&addressdetails=1" \
+        -A "geo-bash-script")
+    address=$(echo "$response" | jq -r '.display_name // "Address not found"')
+    echo "$address" >> "$ADDR_FILE"
     sleep 1
-done < "$OPENSMIN_FILE"
+done < "$COOR_FILE"
 
-echo "Address list saved to: $OPENSMOUT_FILE"
