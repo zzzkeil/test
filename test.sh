@@ -25,28 +25,7 @@ fi
 rm -f "$KMZ_FILE"
 
 
-#clean up kml file
-sed -i -E 's/<!\[CDATA\[//g; s/\]\]>//g' doc.kml
-sed -i ':a;N;$!ba;s/<name>\([^<]*\)\n<\/name>/<name>\1<\/name>/g' doc.kml
-sed ':a;N;$!ba;s/<name>\([^<]*\)\n<\/name>/<name>\1<\/name>/g' doc.kml > fixed_doc.kml
-
-
-
-#sed ':a;N;$!ba;s/\(<[^>]*>\)\([^<]*[^]]\)\n<\/\([^>]*\)>/\1\2<\/\3>/g' doc.kml > 1fixed_doc.kml
-
-
-
-
-#  $DL_DIR/$KMZ_FILE cleanup
-#sed -n 's:.*<name>\(.*\)</name>.*:\1:p' "$MAP_DIR/doc.kml" > "$MAP_DIR/addresses.txt"
-#sed -Ei 's/.*kWh,//; s/.*<!\[CDATA\[//' "$MAP_DIR/addresses.txt"
-
-
-
-
-
-
-# proper json file ?
-#sed -E 's/^[^,]+, *//; s/ *[[].*[]]$//; s/ *[(].*[)]$//' "$MAP_DIR/addresses.txt" > "$MAP_DIR/addresses.json"
-
+set -e   # stop on first error
+python3 kmltodb.py
+echo "Python finished successfully!"
 
