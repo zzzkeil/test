@@ -2,8 +2,9 @@ import xml.etree.ElementTree as ET
 import pymysql
 from datetime import datetime
 import os
+from lxml import etree
+import re
 
-# --- Einstellungen ---
 KML_FILE = os.path.join(os.path.dirname(__file__), "doc.kml")
 DB_CONFIG = {
     "host": "localhost",
@@ -12,20 +13,38 @@ DB_CONFIG = {
     "database": "deinedatenbank"
 }
 
-# --- KML-Datei parsen ---
+tree = etree.parse(KML_FILE)
+
+for desc in tree.xpath("//description"):
+    desc.getparent().remove(desc)
+
+tree.write("doc_no_description.kml", pretty_print=True, encoding="UTF-8", xml_declaration=True)
+
+with open("KML_FILE", "r", encoding="utf-8") as f:
+    content = f.read()
+
+content = re.sub(r'<!\[CDATA\[', '', content)
+content = re.sub(r'\]\]>', '', content)
+content = re.sub(r'(<[^>]+>)([^<]*?)\n(</[^>]+>)', r'\1\2\3', content)
+content = re.sub(r'&(?![a-zA-Z]+;|#\d+;)', '&amp;', content)
+
+with open("KML_FILE", "w", encoding="utf-8") as f:
+    f.write(content)
+
+
+
 tree = ET.parse(KML_FILE)
 root = tree.getroot()
 
-# Namespace für KML
+
 ns = {"kml": "http://www.opengis.net/kml/2.2"}
 
 placemarks = root.findall(".//kml:Placemark", ns)
 
-# --- Verbindung zur DB ---
+
 conn = pymysql.connect(**DB_CONFIG)
 cursor = conn.cursor()
 
-# Tabelle anlegen (falls nicht vorhanden)
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS kml_data (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -37,7 +56,6 @@ CREATE TABLE IF NOT EXISTS kml_data (
 )
 """)
 
-# --- Daten einfügen oder aktualisieren ---
 for pm in placemarks:
     name = pm.find("kml:name", ns).text if pm.find("kml:name", ns) is not None else None
     coords = pm.find(".//kml:coordinates", ns).text if pm.find(".//kml:coordinates", ns) is not None else None
@@ -46,8 +64,6 @@ for pm in placemarks:
         lon, lat, *_ = coords.strip().split(",")
         lon = float(lon)
         lat = float(lat)
-
-        # Insert oder Update falls schon vorhanden
         cursor.execute("""
             INSERT INTO kml_data (name, longitude, latitude, imported_at)
             VALUES (%s, %s, %s, %s)
