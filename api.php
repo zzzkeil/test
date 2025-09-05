@@ -15,3 +15,23 @@ if ($_POST['action'] === 'book') {
     echo json_encode(["status" => "success"]);
     exit;
 }
+
+// Fetch Bookings (with POI name)
+if ($_GET['action'] === 'get_bookings') {
+    $stmt = $pdo->query("
+        SELECT b.id, p.name AS poi_name, b.customer_name, b.customer_email, b.booking_time
+        FROM bookings b
+        JOIN pois p ON b.poi_id = p.id
+        ORDER BY b.booking_time DESC
+    ");
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+    exit;
+}
+
+// Delete Booking
+if ($_POST['action'] === 'delete_booking') {
+    $stmt = $pdo->prepare("DELETE FROM bookings WHERE id = ?");
+    $stmt->execute([$_POST['id']]);
+    echo json_encode(["status" => "deleted"]);
+    exit;
+}
