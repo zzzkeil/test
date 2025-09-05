@@ -14,3 +14,9 @@ CREATE TABLE bookings (
     booking_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (poi_id) REFERENCES pois(id)
 );
+
+CREATE TABLE admins (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
