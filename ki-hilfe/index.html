@@ -55,6 +55,7 @@
         <input type="date" id="edit-date" required /><br>
         <input type="time" id="edit-time" required /><br>
         <button>Speichern</button>
+        <button id="export-btn" style="display:none;">📥 CSV Export</button>
       </form>
     </div>
   </div>
@@ -169,6 +170,11 @@
       document.getElementById("edit-date").value=date;
       document.getElementById("edit-time").value=time;
       document.getElementById("edit-modal").style.display="block";
+      document.getElementById("export-btn").style.display = "inline-block";
+      document.getElementById("export-btn").onclick = () => {
+      window.location = "api.php?export=csv&poi=" + encodeURIComponent(poi.name);
+};
+
     }
     function closeEditModal(){ document.getElementById("edit-modal").style.display="none"; }
     document.getElementById("update-form").addEventListener("submit", async e=>{
