@@ -8,9 +8,9 @@ kml_file = "doc.kml"
 
 DB_CONFIG = {
     "host": "localhost",
-    "user": "",
-    "password": "",
-    "database": "",
+    "user": "keil",
+    "password": "zzz",
+    "database": "zzz",
     "charset": "utf8mb4",
     "cursorclass": pymysql.cursors.DictCursor
 }
@@ -22,11 +22,13 @@ tree = etree.parse(kml_file)
 root = tree.getroot()
 
 # Regex patterns for cleaning
-remove_chars = r"[()\*\[\]≥,]"
+remove_chars = r"[()\*\[\]≥≳,]"
 remove_kw_num = r"\b\d+(\.\d+)?\s*kW\b"
 remove_ct_num = r"\b\d+(\.\d+)?\s*ct/kWh\b"
+remove_rp_num = r"\b\d+(\.\d+)?\s*rp/kWh\b"
 remove_kw_unit = r"\bkW\b"
 remove_ct_unit = r"\bct/kWh\b"
+remove_rp_unit = r"\brp/kWh\b"
 
 for name_el in root.findall(".//kml:name", namespaces=ns):
     if name_el.text:
