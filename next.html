@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>POI Booking Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <style>
+    #map { height: 600px; }
+    .booking-form { margin-top: 20px; display: none; }
+  </style>
+</head>
+<body>
+  <h1>POI Booking Map</h1>
+  <div id="map"></div>
+
+  <div class="booking-form" id="bookingForm">
+    <h3>Book <span id="poiName"></span></h3>
+    <form id="bookForm">
+      <input type="hidden" name="poi_id" id="poiId">
+      <label>Name: <input type="text" name="name" required></label><br>
+      <button type="submit">Book</button>
+    </form>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([53.5, 13.0], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    fetch('api.php?action=get_pois')
+      .then(res => res.json())
+      .then(pois => {
+        pois.forEach(poi => {
+          const marker = L.marker([poi.latitude, poi.longitude]).addTo(map);
+          marker.bindPopup(`<b>${poi.name}</b><br><button onclick="bookPOI(${poi.id}, '${poi.name}')">Book</button>`);
+        });
+      });
+
+    function bookPOI(id, name) {
+      document.getElementById('bookingForm').style.display = 'block';
+      document.getElementById('poiName').innerText = name;
+      document.getElementById('poiId').value = id;
+    }
+
+    document.getElementById('bookForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      formData.append('action', 'book');
+      fetch('api.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === "success") {
+            alert("Booking successful!");
+            document.getElementById('bookingForm').style.display = 'none';
+          }
+        });
+    });
+  </script>
+</body>
+</html>
