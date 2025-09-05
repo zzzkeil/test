@@ -36,8 +36,10 @@ for name_el in root.findall(".//kml:name", namespaces=ns):
         text = re.sub(remove_chars, "", text)
         text = re.sub(remove_kw_num, "", text, flags=re.IGNORECASE)
         text = re.sub(remove_ct_num, "", text, flags=re.IGNORECASE)
+        text = re.sub(remove_rp_num, "", text, flags=re.IGNORECASE)
         text = re.sub(remove_kw_unit, "", text, flags=re.IGNORECASE)
         text = re.sub(remove_ct_unit, "", text, flags=re.IGNORECASE)
+        text = re.sub(remove_rp_unit, "", text, flags=re.IGNORECASE)
         text = re.sub(r"\s+", " ", text)  # collapse spaces
         name_el.text = text.strip()
 
