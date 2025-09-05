@@ -1,10 +1,10 @@
-import requests
 import xml.etree.ElementTree as ET
 import pymysql
 from datetime import datetime
+import os
 
 # --- Einstellungen ---
-KML_URL = "doc.kml"
+KML_FILE = os.path.join(os.path.dirname(__file__), "doc.kml")
 DB_CONFIG = {
     "host": "localhost",
     "user": "deinuser",
@@ -12,16 +12,11 @@ DB_CONFIG = {
     "database": "deinedatenbank"
 }
 
-# --- KML abrufen ---
-response = requests.get(KML_URL)
-with open("data.kml", "wb") as f:
-    f.write(response.content)
-
-# --- XML parsen ---
-tree = ET.parse("data.kml")
+# --- KML-Datei parsen ---
+tree = ET.parse(KML_FILE)
 root = tree.getroot()
 
-# KML-Namespace (wichtig, sonst findet er die Tags nicht)
+# Namespace für KML
 ns = {"kml": "http://www.opengis.net/kml/2.2"}
 
 placemarks = root.findall(".//kml:Placemark", ns)
@@ -37,21 +32,29 @@ CREATE TABLE IF NOT EXISTS kml_data (
     name VARCHAR(255),
     longitude DOUBLE,
     latitude DOUBLE,
-    imported_at DATETIME
+    imported_at DATETIME,
+    UNIQUE KEY unique_coords (longitude, latitude)
 )
 """)
 
-# --- Daten einfügen ---
+# --- Daten einfügen oder aktualisieren ---
 for pm in placemarks:
     name = pm.find("kml:name", ns).text if pm.find("kml:name", ns) is not None else None
     coords = pm.find(".//kml:coordinates", ns).text if pm.find(".//kml:coordinates", ns) is not None else None
     
     if coords:
         lon, lat, *_ = coords.strip().split(",")
+        lon = float(lon)
+        lat = float(lat)
+
+        # Insert oder Update falls schon vorhanden
         cursor.execute("""
             INSERT INTO kml_data (name, longitude, latitude, imported_at)
             VALUES (%s, %s, %s, %s)
-        """, (name, float(lon), float(lat), datetime.now()))
+            ON DUPLICATE KEY UPDATE
+                name = VALUES(name),
+                imported_at = VALUES(imported_at)
+        """, (name, lon, lat, datetime.now()))
 
 conn.commit()
 cursor.close()
