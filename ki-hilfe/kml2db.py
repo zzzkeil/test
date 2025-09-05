@@ -8,13 +8,15 @@ import re
 KML_FILE = os.path.join(os.path.dirname(__file__), "doc.kml")
 DB_CONFIG = {
     "host": "localhost",
-    "user": "deinuser",
-    "password": "deinpasswort",
-    "database": "deinedatenbank"
+    "user": "",
+    "password": "",
+    "database": ""
 }
 
-# --- 1. Remove <description> tags ---
-tree = etree.parse(KML_FILE)
+# --- 1. Remove <description> tags (robust parsing) ---
+parser = etree.XMLParser(recover=True)
+tree = etree.parse(KML_FILE, parser)
+
 for desc in tree.xpath("//description"):
     desc.getparent().remove(desc)
 
@@ -29,10 +31,10 @@ with open(KML_FILE, "r", encoding="utf-8") as f:
 content = re.sub(r'<!\[CDATA\[', '', content)
 content = re.sub(r'\]\]>', '', content)
 
-# merge broken tags
+# merge broken tags (like <name>text\n</name>)
 content = re.sub(r'(<[^>]+>)([^<]*?)\n(</[^>]+>)', r'\1\2\3', content)
 
-# escape raw &
+# escape raw & unless already an entity
 content = re.sub(r'&(?![a-zA-Z]+;|#\d+;)', '&amp;', content)
 
 with open(KML_FILE, "w", encoding="utf-8") as f:
