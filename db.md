@@ -10,7 +10,7 @@ CREATE TABLE bookings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     poi_id INT NOT NULL,
     customer_name VARCHAR(255) NOT NULL,
-    customer_email VARCHAR(255) NOT NULL,
+    booking_date DATETIME NOT NULL
     booking_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (poi_id) REFERENCES pois(id)
 );
