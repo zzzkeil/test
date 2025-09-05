@@ -49,3 +49,29 @@ if ($method === "GET" && isset($_GET["poi"])) {
     http_response_code(400);
     echo json_encode(["error" => "Ungültige Anfrage"]);
 }
+
+} elseif ($method === "GET" && isset($_GET["export"]) && $_GET["export"] === "csv") {
+    // CSV-Export
+    $poi = $_GET["poi"] ?? null;
+    if ($poi) {
+        $stmt = $pdo->prepare("SELECT * FROM entries WHERE poi = ? ORDER BY date,time");
+        $stmt->execute([$poi]);
+    } else {
+        $stmt = $pdo->query("SELECT * FROM entries ORDER BY poi,date,time");
+    }
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    header("Content-Type: text/csv; charset=utf-8");
+    header("Content-Disposition: attachment; filename=entries.csv");
+
+    $out = fopen("php://output", "w");
+    if (!empty($rows)) {
+        fputcsv($out, array_keys($rows[0])); // Kopfzeile
+        foreach ($rows as $r) {
+            fputcsv($out, $r);
+        }
+    }
+    fclose($out);
+    exit;
+}
+
