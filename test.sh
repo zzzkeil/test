@@ -26,6 +26,7 @@ rm -f "$KMZ_FILE"
 
 
 set -e   # stop on first error
+cd $MAP_DIR
 python3 kmltodb.py
 echo "Python finished successfully!"
 
