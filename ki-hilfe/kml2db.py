@@ -13,35 +13,39 @@ DB_CONFIG = {
     "database": "deinedatenbank"
 }
 
+# --- 1. Remove <description> tags ---
 tree = etree.parse(KML_FILE)
-
 for desc in tree.xpath("//description"):
     desc.getparent().remove(desc)
 
-tree.write("doc_no_description.kml", pretty_print=True, encoding="UTF-8", xml_declaration=True)
+# Write back cleaned file
+tree.write(KML_FILE, pretty_print=True, encoding="UTF-8", xml_declaration=True)
 
-with open("KML_FILE", "r", encoding="utf-8") as f:
+# --- 2. Clean CDATA and broken tags ---
+with open(KML_FILE, "r", encoding="utf-8") as f:
     content = f.read()
 
+# remove CDATA
 content = re.sub(r'<!\[CDATA\[', '', content)
 content = re.sub(r'\]\]>', '', content)
+
+# merge broken tags
 content = re.sub(r'(<[^>]+>)([^<]*?)\n(</[^>]+>)', r'\1\2\3', content)
+
+# escape raw &
 content = re.sub(r'&(?![a-zA-Z]+;|#\d+;)', '&amp;', content)
 
-with open("KML_FILE", "w", encoding="utf-8") as f:
+with open(KML_FILE, "w", encoding="utf-8") as f:
     f.write(content)
 
-
-
+# --- 3. Parse again for DB import ---
 tree = ET.parse(KML_FILE)
 root = tree.getroot()
-
-
 ns = {"kml": "http://www.opengis.net/kml/2.2"}
 
 placemarks = root.findall(".//kml:Placemark", ns)
 
-
+# --- 4. Insert into DB ---
 conn = pymysql.connect(**DB_CONFIG)
 cursor = conn.cursor()
 
