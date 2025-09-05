@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>POI-Suche & Buchungen</title>
+  <style>
+    body { font-family: sans-serif; margin:0; }
+    header { padding:10px; background:#2563eb; color:#fff; }
+    .container { display:flex; }
+    #left { width:300px; border-right:1px solid #ccc; padding:10px; }
+    #right { flex:1; padding:10px; }
+    #search { width:100%; padding:6px; }
+    .poi-item { padding:6px; border-bottom:1px solid #eee; cursor:pointer; }
+    .poi-item:hover { background:#f3f4f6; }
+    .poi-item.selected { background:#2563eb; color:#fff; }
+    .entry { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #eee; }
+    .btn { padding:2px 6px; margin-left:4px; cursor:pointer; }
+    .btn-danger { color:#b91c1c; }
+    /* Modal */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); }
+    .modal-content { background:#fff; max-width:300px; margin:100px auto; padding:20px; border-radius:6px; position:relative; }
+    .close { position:absolute; right:10px; top:10px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <header><h2>POI-Suche & Eintragungen</h2></header>
+  <div class="container">
+    <aside id="left">
+      <input id="search" placeholder="Suche..." />
+      <div id="poi-list"></div>
+    </aside>
+    <main id="right">
+      <h3 id="poi-title">Kein POI ausgewählt</h3>
+      <p id="poi-desc"></p>
+      <form id="entry-form" style="display:none;">
+        <input id="user-name" placeholder="Name" required />
+        <input type="date" id="user-date" required />
+        <input type="time" id="user-time" required />
+        <button>Eintragen</button>
+      </form>
+      <h4>Einträge</h4>
+      <div id="entries">Bitte einen POI wählen.</div>
+    </main>
+  </div>
+
+  <!-- Bearbeiten Modal -->
+  <div id="edit-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeEditModal()">×</span>
+      <h3>Eintrag bearbeiten</h3>
+      <form id="update-form">
+        <input type="hidden" id="edit-id">
+        <input id="edit-name" required /><br>
+        <input type="date" id="edit-date" required /><br>
+        <input type="time" id="edit-time" required /><br>
+        <button>Speichern</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Löschen Modal -->
+  <div id="delete-modal" class="modal">
+    <div class="modal-content">
+      <h3>Löschen?</h3>
+      <input type="hidden" id="delete-id">
+      <button onclick="confirmDelete()">Ja</button>
+      <button onclick="closeDeleteModal()">Nein</button>
+    </div>
+  </div>
+
+  <!-- Leaflet + Omnivore nur zum Parsen von KML -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-omnivore/leaflet-omnivore.min.js"></script>
+  <script>
+    const poiListDiv = document.getElementById("poi-list");
+    const searchInput = document.getElementById("search");
+    const poiTitle = document.getElementById("poi-title");
+    const poiDesc = document.getElementById("poi-desc");
+    const entryForm = document.getElementById("entry-form");
+    const entriesDiv = document.getElementById("entries");
+    let allPOIs = [];
+    let selectedPOI = null;
+
+    // KML laden
+    omnivore.kml("doc.kml").on("ready", function(e) {
+      e.target.eachLayer(layer => {
+        if (layer.feature && layer.feature.properties) {
+          allPOIs.push({
+            name: layer.feature.properties.name,
+            desc: layer.feature.properties.description || ""
+          });
+        }
+      });
+      renderList(allPOIs);
+    });
+
+    function renderList(pois) {
+      poiListDiv.innerHTML = "";
+      pois.forEach(poi => {
+        const div = document.createElement("div");
+        div.className = "poi-item";
+        div.textContent = poi.name;
+        div.onclick = () => selectPOI(poi, div);
+        poiListDiv.appendChild(div);
+      });
+    }
+
+    function selectPOI(poi, element) {
+      document.querySelectorAll(".poi-item").forEach(el=>el.classList.remove("selected"));
+      element.classList.add("selected");
+      selectedPOI = poi;
+      poiTitle.textContent = poi.name;
+      poiDesc.textContent = poi.desc;
+      entryForm.style.display = "block";
+      showEntries();
+    }
+
+    async function fetchEntries(poiName) {
+      const res = await fetch("api.php?poi=" + encodeURIComponent(poiName));
+      return res.json();
+    }
+    async function saveEntry(poiName, entry) {
+      await fetch("api.php?poi=" + encodeURIComponent(poiName), {
+        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(entry)
+      });
+    }
+    async function updateEntry(id, entry) {
+      await fetch("api.php?id=" + id, {
+        method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify(entry)
+      });
+    }
+    async function deleteEntry(id) {
+      await fetch("api.php?id=" + id, {method:"DELETE"});
+    }
+
+    entryForm.addEventListener("submit", async e=>{
+      e.preventDefault();
+      if(!selectedPOI) return;
+      const name = document.getElementById("user-name").value;
+      const date = document.getElementById("user-date").value;
+      const time = document.getElementById("user-time").value;
+      await saveEntry(selectedPOI.name, {name, date, time});
+      e.target.reset();
+      showEntries();
+    });
+
+    async function showEntries() {
+      if(!selectedPOI) return;
+      const entries = await fetchEntries(selectedPOI.name);
+      entriesDiv.innerHTML = "";
+      if(entries.length===0){ entriesDiv.textContent="Keine Einträge"; return; }
+      entries.forEach(e=>{
+        const row = document.createElement("div");
+        row.className="entry";
+        row.innerHTML = `<div><b>${e.name}</b> – ${e.date} ${e.time}</div>
+          <div>
+            <button class="btn" onclick="openEditModal(${e.id}, '${e.name}', '${e.date}', '${e.time}')">✏️</button>
+            <button class="btn btn-danger" onclick="openDeleteModal(${e.id})">🗑️</button>
+          </div>`;
+        entriesDiv.appendChild(row);
+      });
+    }
+
+    // Modal-Funktionen
+    function openEditModal(id,name,date,time){
+      document.getElementById("edit-id").value=id;
+      document.getElementById("edit-name").value=name;
+      document.getElementById("edit-date").value=date;
+      document.getElementById("edit-time").value=time;
+      document.getElementById("edit-modal").style.display="block";
+    }
+    function closeEditModal(){ document.getElementById("edit-modal").style.display="none"; }
+    document.getElementById("update-form").addEventListener("submit", async e=>{
+      e.preventDefault();
+      const id=document.getElementById("edit-id").value;
+      const name=document.getElementById("edit-name").value;
+      const date=document.getElementById("edit-date").value;
+      const time=document.getElementById("edit-time").value;
+      await updateEntry(id,{name,date,time});
+      closeEditModal(); showEntries();
+    });
+
+    function openDeleteModal(id){
+      document.getElementById("delete-id").value=id;
+      document.getElementById("delete-modal").style.display="block";
+    }
+    function closeDeleteModal(){ document.getElementById("delete-modal").style.display="none"; }
+    async function confirmDelete(){
+      const id=document.getElementById("delete-id").value;
+      await deleteEntry(id);
+      closeDeleteModal(); showEntries();
+    }
+    window.confirmDelete=confirmDelete;
+  </script>
+</body>
+</html>
