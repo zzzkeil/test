@@ -29,6 +29,10 @@ sed -n 's:.*<name>\(.*\)</name>.*:\1:p' "$MAP_DIR/doc.kml" > "$MAP_DIR/addresses
 sed -Ei 's/.*kWh,//; s/.*<!\[CDATA\[//' "$MAP_DIR/addresses.txt"
 
 
+
+
+
+
 # proper json file ?
 #sed -E 's/^[^,]+, *//; s/ *[[].*[]]$//; s/ *[(].*[)]$//' "$MAP_DIR/addresses.txt" > "$MAP_DIR/addresses.json"
 
