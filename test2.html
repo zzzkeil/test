@@ -2,121 +2,72 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>POIs mit Suche & Filter</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-omnivore/leaflet-omnivore.min.js"></script>
+  <title>POI-Suche ohne Karte</title>
   <style>
-    body { margin:0; display:flex; height:100vh; font-family: sans-serif; }
-    #sidebar {
-      width: 300px;
-      display: flex;
-      flex-direction: column;
-      border-right: 1px solid #ccc;
-    }
+    body { margin:0; font-family: sans-serif; padding: 20px; }
     #search {
       padding: 8px;
-      border: none;
-      border-bottom: 1px solid #ccc;
-      outline: none;
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
       font-size: 14px;
     }
     #poi-list {
-      flex: 1;
-      overflow-y: auto;
+      max-width: 400px;
     }
     .poi-item {
-      padding: 6px;
-      cursor: pointer;
+      padding: 8px;
       border-bottom: 1px solid #eee;
     }
     .poi-item:hover {
       background: #f0f0f0;
     }
-    #map { flex: 1; }
   </style>
 </head>
 <body>
-  <div id="sidebar">
-    <input type="text" id="search" placeholder="🔍 POI suchen...">
-    <div id="poi-list"></div>
-  </div>
-  <div id="map"></div>
-  
-  <script>
-    const map = L.map('map').setView([51.1657, 10.4515], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+  <h2>POI-Suche</h2>
+  <input type="text" id="search" placeholder="🔍 POI suchen...">
+  <div id="poi-list"></div>
 
+  <!-- Leaflet + Omnivore (nur als Parser für KML) -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-omnivore/leaflet-omnivore.min.js"></script>
+  <script>
     const poiListDiv = document.getElementById("poi-list");
     const searchInput = document.getElementById("search");
     const allPOIs = [];
 
-    // KML laden
-    omnivore.kml('https://www.google.com/maps/d/u/0/kml?mid=DEINE_MAP_ID&forcekml=1')
+    // Lokale doc.kml laden
+    omnivore.kml('doc.kml')
       .on('ready', function(e) {
-        map.fitBounds(e.target.getBounds());
-
         e.target.eachLayer(layer => {
           if (layer.feature && layer.feature.properties && layer.feature.properties.name) {
             const name = layer.feature.properties.name;
             const desc = layer.feature.properties.description || "";
-
-            // Popup
-            layer.bindPopup(`<b>${name}</b><br>${desc}`);
-
-            // POI speichern
-            allPOIs.push({
-              name,
-              desc,
-              layer
-            });
+            allPOIs.push({ name, desc });
           }
         });
-
         renderList(allPOIs);
-      })
-      .addTo(map);
+      });
 
-    // Liste rendern
+    // Liste anzeigen
     function renderList(pois) {
       poiListDiv.innerHTML = "";
       pois.forEach(poi => {
         const item = document.createElement("div");
         item.className = "poi-item";
-        item.textContent = poi.name;
-        item.onclick = () => {
-          map.setView(poi.layer.getLatLng(), 15);
-          poi.layer.openPopup();
-        };
+        item.innerHTML = `<b>${poi.name}</b><br>${poi.desc}`;
         poiListDiv.appendChild(item);
       });
-
-      // Karte updaten: erst alle POIs rausnehmen
-      allPOIs.forEach(poi => {
-        map.removeLayer(poi.layer);
-      });
-
-      // dann nur gefilterte wieder hinzufügen
-      pois.forEach(poi => {
-        poi.layer.addTo(map);
-      });
-
-      // Zoom anpassen, falls Treffer vorhanden
-      if (pois.length > 0) {
-        const group = L.featureGroup(pois.map(p => p.layer));
-        map.fitBounds(group.getBounds());
-      }
     }
 
-    // Suche/Filter
+    // Suche
     searchInput.addEventListener("input", () => {
-      const searchTerm = searchInput.value.toLowerCase();
+      const term = searchInput.value.toLowerCase();
       const filtered = allPOIs.filter(poi =>
-        poi.name.toLowerCase().includes(searchTerm) ||
-        poi.desc.toLowerCase().includes(searchTerm)
+        poi.name.toLowerCase().includes(term) ||
+        poi.desc.toLowerCase().includes(term)
       );
       renderList(filtered);
     });
