@@ -52,12 +52,12 @@ conn = pymysql.connect(**DB_CONFIG)
 cursor = conn.cursor()
 
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS kml_data (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
-    longitude DOUBLE,
-    latitude DOUBLE,
-    imported_at DATETIME,
+CREATE TABLE IF NOT EXISTS pois (
+id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    longitude DECIMAL(10,8) NOT NULL,
+    latitude DECIMAL(10,8) NOT NULL,
+    imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_coords (longitude, latitude)
 )
 """)
