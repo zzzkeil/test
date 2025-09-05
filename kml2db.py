@@ -77,7 +77,7 @@ for pm in placemarks:
             lat = float(lat)
             
             cursor.execute("""
-                INSERT INTO kml_data (name, longitude, latitude, imported_at)
+                INSERT INTO pois (name, longitude, latitude, imported_at)
                 VALUES (%s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
                     name = VALUES(name),
