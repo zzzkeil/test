@@ -53,10 +53,14 @@ cursor = conn.cursor()
 
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS pois (
-id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     longitude DECIMAL(10,8) NOT NULL,
     latitude DECIMAL(10,8) NOT NULL,
+    streetname VARCHAR(255),
+    housenumber VARCHAR(20),
+    postalcode VARCHAR(20),
+    city VARCHAR(255),
     imported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_coords (longitude, latitude)
 )
