@@ -16,7 +16,7 @@ cursor = conn.cursor()
 
 cursor.execute("""
     SELECT id, latitude, longitude 
-    FROM poi 
+    FROM pois 
     WHERE streetname IS NULL 
        OR housenumber IS NULL 
        OR postalcode IS NULL 
@@ -26,7 +26,7 @@ pois = cursor.fetchall()
 print(f"Found {len(pois)} POIs to update.")
 
 for idx, poi in enumerate(pois, start=1):
-    lat, lon, poi_id = poi["latitude"], poi["longitude"], poi["id"]
+    lat, lon, pois_id = pois["latitude"], pois["longitude"], pois["id"]
     url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&addressdetails=1"
 
     try:
@@ -40,11 +40,11 @@ for idx, poi in enumerate(pois, start=1):
         city = address.get("city") or address.get("town") or address.get("village") or address.get("hamlet")
 
         if not street and not house and not postal and not city:
-            print(f"⚠️ No address found for POI {poi_id}, skipping...")
+            print(f"⚠️ No address found for POI {pois_id}, skipping...")
             continue
 
         cursor.execute("""
-            UPDATE poi
+            UPDATE pois
             SET streetname=%s, housenumber=%s, postalcode=%s, city=%s
             WHERE id=%s
         """, (street, house, postal, city, poi_id))
@@ -52,11 +52,11 @@ for idx, poi in enumerate(pois, start=1):
         if idx % 50 == 0:  # commit every 50 updates
             conn.commit()
 
-        print(f"✅ Updated POI {poi_id}: {street} {house}, {postal} {city}")
+        print(f"✅ Updated POI {pois_id}: {street} {house}, {postal} {city}")
         time.sleep(1)
 
     except Exception as e:
-        print(f"❌ Error updating POI {poi_id}: {e}")
+        print(f"❌ Error updating POI {pois_id}: {e}")
 
 conn.commit()
 cursor.close()
