@@ -1,15 +1,19 @@
 import requests
-import mysql.connector
+import pymysql
 import time
 
 # 🔹 Database connection
-conn = mysql.connector.connect(
-    host="localhost",
-    user="",      
-    password="",   
-    database=""    
-)
-cursor = conn.cursor(dictionary=True)
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "",
+    "password": "",
+    "database": "",
+    "charset": "utf8mb4",
+    "cursorclass": pymysql.cursors.DictCursor
+}
+
+conn = pymysql.connect(**DB_CONFIG)
+cursor = conn.cursor()
 
 # 🔹 Fetch POIs that don’t have an address yet
 cursor.execute("""
