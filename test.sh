@@ -1,6 +1,6 @@
 #!/bin/bash
 
-apt-get install unzip jq python3-pymysql python3-lxml -y
+apt-get install unzip jq python3-pymysql python3-lxml python3-requests -y
 
 URL="https://www.google.com/maps/d/kml?mid=1L-gatZq7W4lZzdrfLLAK3AVUoc8lKNo&femb=1&ll=50.36612061088382%2C10.627823200000002&z=6"
 DL_DIR="dl_data"
